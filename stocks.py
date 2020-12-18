@@ -21,13 +21,18 @@ with open("prices.txt", 'r') as f:
     e = prev.index("on")
     prev = int(prev[1:e-1].replace(',', ''))
 
+change = ((price-prev)*100.0)/prev 
+change = round(change, 3)
+
+print("prev: ", prev)
+print("price: ", price)
+print("% change: ", change)
+
 with open("prices.txt", 'a') as f:
-    f.write("\n"+ pretty_price  + " on " + today + " at " + time )
+    f.write("\n"+ pretty_price  + " on " + today + " at " + time + ". " + str(change) + "% change from last logged price.")
 
 print("wrote to file for " + today)
 
-change = (price-prev)/prev 
-print("% change: ", price-prev)
 
 if change < 0:
     print("yes")
