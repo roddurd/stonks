@@ -1,42 +1,54 @@
-import urllib
+import urllib, schedule
 from datetime import datetime, date
-
-today = date.today().strftime("%B %d, %Y")
-time = datetime.now().strftime("%H:%M")
-
-fp = urllib.urlopen("https://www.coindesk.com/price/bitcoin")
-d = fp.read()
-html  = d.decode("utf8")
-fp.close()
-
-start = html.index("price-large") + 42
-end = start + html[start:].index('.')
-
-price = int(html[start:end].replace(',',''))
-pretty_price = "$" + html[start:end]
-
-with open("prices.txt", 'r') as f:
-    lines = f.readlines()
-    prev = lines[-1]
-    e = prev.index("on")
-    prev = int(prev[1:e-1].replace(',', ''))
-
-change = ((price-prev)*100.0)/prev 
-change = round(change, 3)
-
-print("prev: ", prev)
-print("price: ", price)
-print("% change: ", change)
-
-with open("prices.txt", 'a') as f:
-    f.write("\n"+ pretty_price  + " on " + today + " at " + time + ". " + str(change) + "% change from last logged price.")
-
-print("wrote to file for " + today)
+from twilio.rest import Client
 
 
-if change < 0:
-    print("yes")
-else:
-    print("no")
-    
-    
+def get_price(coin):
+
+    fp = urllib.urlopen("https://www.coindesk.com/price/" + coin)
+    d = fp.read()
+    html  = d.decode("utf8")
+    fp.close()
+
+    start = html.index("price-large") + 42
+    end = start + html[start:].index('.')
+
+    price = int(html[start:end].replace(',',''))
+    return price
+
+
+def update():
+    today = date.today().strftime("%B %d, %Y")
+    time = datetime.now().strftime("%H:%M")
+
+    btc = get_price("bitcoin")
+    eth = get_price("ethereum")
+
+    e2b = eth*1.0/btc
+
+    with open("ratio.txt", 'r') as f:
+        lines = f.readlines()
+        prev = lines[-1]
+        e = prev.index(" ")
+        pretty_prev = prev[:e-1]
+        prev = float(pretty_prev)
+
+    change = (e2b*1.0/prev) - 1
+    msg = str(round(e2b,6)) +" eth/btc = " + str(eth)+"/" + str(btc) + ". Up " + str(round(100*change,7)) + " from " + str(prev)
+    print(msg)
+
+    with open("ratio.txt", 'a') as f:
+        f.write(msg+"\n")
+
+    if change < -3:
+        print("price drop!")
+        client = Client("ACab89ceac87267849a5aaa930b7866270", "9ff469eb513f4904c059d7ba3156ca0f")
+        client.messages.create(to="+19499813457",from_="+12059736827", body=msg)
+    else:
+        print("no")
+
+print("\nrunning...")
+schedule.every(1).seconds.do(update)    
+
+while True:
+    schedule.run_pending()
