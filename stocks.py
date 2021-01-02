@@ -30,7 +30,7 @@ def update():
         prev = float(pretty_prev)
 
     change = (epb*1.0/prev) - 1
-    msg = str(round(epb,6)) +" eth/btc = " + str(eth)+"/" + str(btc) + ".  " + str(round(100*change,7)) + "% from " + str(prev)
+    msg = str(round(epb,6)) +" eth/btc = " + str(eth)+"/" + str(btc) + " on " + today + " at " + time " .  " + str(round(100*change,7)) + "% from " + str(prev)
     print(msg)
 
     with open("ratio.txt", 'a') as f:
